@@ -5,16 +5,18 @@
   "scripts": {
     "prepare": "husky",
     "format": "prettier --write \"apps/**/*.{ts,tsx,json,md,css,html}\"",
-    "install:all": "npm install && npm --prefix apps/backend install && npm --prefix apps/operator-dashboard install",
-    "dev": "npm run docker:up && concurrently -k -n backend,frontend -c blue,magenta \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "install:all": "npm install && npm --prefix apps/backend install && npm --prefix apps/operator-dashboard install && npm --prefix apps/admin-dashboard install",
+    "dev": "npm run docker:up && concurrently -k -n backend,operator,admin -c blue,magenta,cyan \"npm run backend:dev\" \"npm run operator:dev\" \"npm run admin:dev\"",
     "docker:up": "docker compose up -d --wait",
     "docker:down": "docker compose down",
     "docker:reset": "docker compose down -v && docker compose up -d --wait",
     "backend:dev": "npm --prefix apps/backend run start:dev",
     "backend:test": "npm --prefix apps/backend test",
     "backend:lint": "npm --prefix apps/backend run lint",
-    "frontend:dev": "npm --prefix apps/operator-dashboard run dev",
-    "frontend:build": "npm --prefix apps/operator-dashboard run build"
+    "operator:dev": "npm --prefix apps/operator-dashboard run dev",
+    "operator:build": "npm --prefix apps/operator-dashboard run build",
+    "admin:dev": "npm --prefix apps/admin-dashboard run dev",
+    "admin:build": "npm --prefix apps/admin-dashboard run build"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",

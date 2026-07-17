@@ -9,7 +9,7 @@ export default {
     'scope-enum': [
       2,
       'always',
-      ['backend', 'operator-dashboard', 'repo', 'ci', 'docs'],
+      ['backend', 'operator-dashboard', 'admin-dashboard', 'repo', 'ci', 'docs'],
     ],
     'scope-empty': [0],
     'body-max-line-length': [0],
