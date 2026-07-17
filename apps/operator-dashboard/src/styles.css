@@ -189,6 +189,16 @@ th, td {
   border-bottom: 1px solid var(--panel-border);
 }
 
+tr.row-flash td {
+  animation: row-flash 3s ease-out;
+}
+
+@keyframes row-flash {
+  0%   { background-color: rgba(59, 130, 246, 0.30); }
+  15%  { background-color: rgba(59, 130, 246, 0.30); }
+  100% { background-color: transparent; }
+}
+
 th {
   color: var(--text-dim);
   font-size: 0.8rem;

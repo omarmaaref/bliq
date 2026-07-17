@@ -23,12 +23,15 @@ export function useFleetState(
   operatorId: string,
   mode: SyncMode,
   onVehicleEvent?: (event: VehicleChangedEvent) => void,
+  onWebSocketFallback?: (reason: string) => void,
 ): FleetState {
   const [vehicles, setVehicles] = useState<Vehicle[] | null>(null);
   const [operator, setOperator] = useState<Operator | null>(null);
   const [error, setError] = useState<string | null>(null);
   const onEventRef = useRef(onVehicleEvent);
   onEventRef.current = onVehicleEvent;
+  const onFallbackRef = useRef(onWebSocketFallback);
+  onFallbackRef.current = onWebSocketFallback;
 
   const refresh = useCallback(async () => {
     try {
@@ -73,7 +76,18 @@ export function useFleetState(
     const socket: Socket = io(`${API_URL}/realtime`, {
       transports: ['websocket'],
       withCredentials: true,
+      // Fail fast: two attempts, then trigger fallback.
+      reconnectionAttempts: 2,
+      timeout: 3000,
     });
+
+    let fallbackFired = false;
+    const fallback = (reason: string) => {
+      if (fallbackFired || cancelled) return;
+      fallbackFired = true;
+      socket.disconnect();
+      onFallbackRef.current?.(reason);
+    };
 
     socket.on('vehicles.snapshot', (snapshot: Vehicle[]) => {
       setVehicles(snapshot);
@@ -97,7 +111,10 @@ export function useFleetState(
     });
 
     socket.on('connect_error', (err) => {
-      setError(`WebSocket error: ${err.message}`);
+      fallback(err.message || 'connect error');
+    });
+    socket.io.on('reconnect_failed', () => {
+      fallback('reconnect failed');
     });
 
     return () => {

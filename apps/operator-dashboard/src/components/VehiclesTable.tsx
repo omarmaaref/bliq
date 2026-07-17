@@ -5,19 +5,25 @@ type Props = {
   currentOperatorId: string;
   currentVehicleId: string | null;
   busyVehicleId: string | null;
+  operatorNames: Record<string, string>;
+  recentlyChangedIds: Set<string>;
   onTakeover: (vehicleId: string) => void;
 };
 
-function statusOf(v: Vehicle): {
-  label: string;
-  className: string;
-} {
+function statusOf(
+  v: Vehicle,
+  operatorNames: Record<string, string>,
+): { label: string; className: string } {
   if (v.connectivityStatus === 'offline') {
     return { label: 'Offline', className: 'offline' };
   }
-  return v.assignedOperatorId === null
-    ? { label: 'Available', className: 'available' }
-    : { label: 'In use', className: 'in-use' };
+  if (v.assignedOperatorId === null) {
+    return { label: 'Available', className: 'available' };
+  }
+  const holderName =
+    operatorNames[v.assignedOperatorId] ??
+    `Operator ${v.assignedOperatorId.slice(-4)}`;
+  return { label: holderName, className: 'in-use' };
 }
 
 export function VehiclesTable({
@@ -25,6 +31,8 @@ export function VehiclesTable({
   currentOperatorId,
   currentVehicleId,
   busyVehicleId,
+  operatorNames,
+  recentlyChangedIds,
   onTakeover,
 }: Props) {
   if (vehicles.length === 0) {
@@ -49,7 +57,7 @@ export function VehiclesTable({
         </thead>
         <tbody>
           {vehicles.map((v) => {
-            const status = statusOf(v);
+            const status = statusOf(v, operatorNames);
             const isMine =
               v.assignedOperatorId === currentOperatorId ||
               v.id === currentVehicleId;
@@ -57,8 +65,12 @@ export function VehiclesTable({
               v.connectivityStatus === 'online' &&
               v.assignedOperatorId === null &&
               currentVehicleId === null;
+            const flashing = recentlyChangedIds.has(v.id);
             return (
-              <tr key={v.id}>
+              <tr
+                key={v.id}
+                className={flashing ? 'row-flash' : undefined}
+              >
                 <td>{v.name}</td>
                 <td>
                   <span className={`badge ${v.connectivityStatus}`}>
