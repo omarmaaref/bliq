@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { VehiclesService } from './vehicles.service';
+import { VehicleChangeStreamWatcher } from '../../data-access/vehicles/vehicle-change-stream.watcher';
 import { VehiclesMongoRepository } from '../../data-access/vehicles/vehicles.mongo.repository';
 import {
   VehicleModel,
@@ -8,6 +8,8 @@ import {
 } from '../../data-access/vehicles/vehicles.schema';
 import { VehicleRepository } from '../../domain/vehicles/vehicle.repository';
 import { VehiclesController } from './vehicles.controller';
+import { VehiclesGateway } from './vehicles.gateway';
+import { VehiclesService } from './vehicles.service';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { VehiclesController } from './vehicles.controller';
   providers: [
     VehiclesService,
     { provide: VehicleRepository, useClass: VehiclesMongoRepository },
+    VehicleChangeStreamWatcher,
+    VehiclesGateway,
   ],
   exports: [VehicleRepository, MongooseModule],
 })
