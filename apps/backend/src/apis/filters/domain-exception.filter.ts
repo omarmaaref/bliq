@@ -5,10 +5,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
-import {
-  DomainError,
-  DomainErrorKind,
-} from '../../domain/shared/domain.error';
+import { DomainError, DomainErrorKind } from '../../domain/shared/domain.error';
 
 /**
  * Generic HTTP mapping for domain errors. New DomainError subclasses just need
@@ -36,7 +33,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
     response.status(status).json({
       statusCode: status,
-      code: exception.code,
+      error: exception.code,
       message: exception.message,
     });
   }

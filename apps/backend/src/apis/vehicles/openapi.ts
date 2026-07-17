@@ -39,12 +39,12 @@ export const setConnectivityOfflineExample = { status: 'offline' as const };
 
 export const vehicleNotFoundExample = {
   statusCode: 404,
-  code: 'VEHICLE_NOT_FOUND',
+  error: 'VEHICLE_NOT_FOUND',
   message: `Vehicle ${SAMPLE_VEHICLE_ID} not found`,
 };
 
 export const cannotOfflineAssignedExample = {
   statusCode: 409,
-  code: 'CANNOT_OFFLINE_ASSIGNED_VEHICLE',
+  error: 'CANNOT_OFFLINE_ASSIGNED_VEHICLE',
   message: 'release the vehicle first',
 };

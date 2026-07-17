@@ -23,6 +23,6 @@ export const operatorListExample: Operator[] = [
 
 export const operatorNotFoundExample = {
   statusCode: 404,
-  code: 'OPERATOR_NOT_FOUND',
+  error: 'OPERATOR_NOT_FOUND',
   message: `Operator ${OP_ID_A} not found`,
 };
