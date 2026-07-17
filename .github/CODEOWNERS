@@ -1,0 +1,12 @@
+* @Omar
+
+# Backend
+/apps/backend/ @Omar
+
+# Frontend
+/apps/operator-dashboard/ @Omar
+
+# CI / repo config
+/.github/ @Omar
+/package.json @Omar
+/docker-compose.yml @Omar

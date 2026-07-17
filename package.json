@@ -1,0 +1,27 @@
+{
+  "name": "bliq",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "prepare": "husky",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,json,md,css,html}\"",
+    "install:all": "npm install && npm --prefix apps/backend install && npm --prefix apps/operator-dashboard install",
+    "dev": "npm run docker:up && concurrently -k -n backend,frontend -c blue,magenta \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "docker:up": "docker compose up -d --wait",
+    "docker:down": "docker compose down",
+    "docker:reset": "docker compose down -v && docker compose up -d --wait",
+    "backend:dev": "npm --prefix apps/backend run start:dev",
+    "backend:test": "npm --prefix apps/backend test",
+    "backend:lint": "npm --prefix apps/backend run lint",
+    "frontend:dev": "npm --prefix apps/operator-dashboard run dev",
+    "frontend:build": "npm --prefix apps/operator-dashboard run build"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "concurrently": "^10.0.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.1",
+    "prettier": "^3.4.2"
+  }
+}
