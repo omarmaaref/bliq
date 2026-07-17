@@ -1,6 +1,7 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import {
   ApiConflictResponse,
+  ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -18,8 +19,15 @@ import {
   vehicleNotHeldByOperatorErrorExample,
   vehicleOfflineErrorExample,
 } from './openapi';
+import { OPERATOR_ID_HEADER, OperatorId } from './operator-id.decorator';
 
 @ApiTags('fleet-management')
+@ApiHeader({
+  name: OPERATOR_ID_HEADER,
+  description: 'Id of the remote operator performing the action.',
+  required: true,
+  example: '65f9d1c4a2b7d3e4c5f6a7b9',
+})
 @Controller('fleet-management')
 export class FleetManagementController {
   constructor(private readonly assignments: FleetAssignmentService) {}
@@ -46,11 +54,11 @@ export class FleetManagementController {
       ],
     },
   })
-  takeover(@Body() dto: TakeoverDto): Promise<Vehicle> {
-    return this.assignments.assignOperatorToVehicle(
-      dto.operatorId,
-      dto.vehicleId,
-    );
+  takeover(
+    @OperatorId() operatorId: string,
+    @Body() dto: TakeoverDto,
+  ): Promise<Vehicle> {
+    return this.assignments.assignOperatorToVehicle(operatorId, dto.vehicleId);
   }
 
   @Post('release')
@@ -66,10 +74,10 @@ export class FleetManagementController {
   })
   @ApiNotFoundResponse({ example: notFoundErrorExample })
   @ApiConflictResponse({ example: vehicleNotHeldByOperatorErrorExample })
-  release(@Body() dto: TakeoverDto): Promise<Vehicle> {
-    return this.assignments.releaseOperatorFromVehicle(
-      dto.operatorId,
-      dto.vehicleId,
-    );
+  release(
+    @OperatorId() operatorId: string,
+    @Body() dto: TakeoverDto,
+  ): Promise<Vehicle> {
+    return this.assignments.releaseOperatorFromVehicle(operatorId, dto.vehicleId);
   }
 }

@@ -4,12 +4,10 @@ const VEHICLE_ID = '65f9d1c4a2b7d3e4c5f6a7b8';
 const OPERATOR_ID = '65f9d1c4a2b7d3e4c5f6a7b9';
 
 export const takeoverRequestExample = {
-  operatorId: OPERATOR_ID,
   vehicleId: VEHICLE_ID,
 };
 
 export const releaseRequestExample = {
-  operatorId: OPERATOR_ID,
   vehicleId: VEHICLE_ID,
 };
 

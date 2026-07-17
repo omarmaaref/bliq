@@ -3,13 +3,6 @@ import { IsMongoId } from 'class-validator';
 
 export class TakeoverDto {
   @ApiProperty({
-    example: '65f9d1c4a2b7d3e4c5f6a7b9',
-    description: 'Id of the remote operator performing the action.',
-  })
-  @IsMongoId()
-  operatorId!: string;
-
-  @ApiProperty({
     example: '65f9d1c4a2b7d3e4c5f6a7b8',
     description: 'Id of the vehicle being taken over or released.',
   })
