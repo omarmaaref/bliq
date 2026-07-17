@@ -27,30 +27,30 @@ export const releaseSuccessExample: Vehicle = {
 
 export const vehicleOfflineErrorExample = {
   statusCode: 409,
-  code: 'VEHICLE_OFFLINE',
+  error: 'VEHICLE_OFFLINE',
   message: 'Only online vehicles can be taken over',
 };
 
 export const vehicleAlreadyAssignedErrorExample = {
   statusCode: 409,
-  code: 'VEHICLE_ALREADY_ASSIGNED',
+  error: 'VEHICLE_ALREADY_ASSIGNED',
   message: 'Another operator is holding this vehicle',
 };
 
 export const operatorAlreadyHasVehicleErrorExample = {
   statusCode: 409,
-  code: 'OPERATOR_ALREADY_HAS_VEHICLE',
+  error: 'OPERATOR_ALREADY_HAS_VEHICLE',
   message: 'Operator is already holding a vehicle; release it first',
 };
 
 export const vehicleNotHeldByOperatorErrorExample = {
   statusCode: 409,
-  code: 'VEHICLE_NOT_HELD_BY_OPERATOR',
+  error: 'VEHICLE_NOT_HELD_BY_OPERATOR',
   message: 'Operator is not holding this vehicle',
 };
 
 export const notFoundErrorExample = {
   statusCode: 404,
-  code: 'VEHICLE_NOT_FOUND',
+  error: 'VEHICLE_NOT_FOUND',
   message: `Vehicle ${VEHICLE_ID} not found`,
 };

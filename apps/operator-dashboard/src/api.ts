@@ -1,4 +1,9 @@
-import { ApiError, type ApiErrorBody, type Operator, type Vehicle } from './types';
+import {
+  ApiError,
+  type ApiErrorBody,
+  type Operator,
+  type Vehicle,
+} from './types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
@@ -17,7 +22,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiError(
       body.message ?? `Request failed with status ${res.status}`,
-      body.code ?? 'UNKNOWN_ERROR',
+      body.error ?? 'UNKNOWN_ERROR',
       res.status,
     );
   }
