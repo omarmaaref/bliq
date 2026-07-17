@@ -17,6 +17,16 @@ export type ApiErrorBody = {
   message: string;
 };
 
+export type VehicleChangeKind = 'created' | 'updated' | 'deleted';
+
+export type VehicleChangedEvent = {
+  kind: VehicleChangeKind;
+  vehicleId: string;
+  vehicle: Vehicle | null;
+};
+
+export type SyncMode = 'polling' | 'websocket';
+
 export class ApiError extends Error {
   constructor(
     message: string,

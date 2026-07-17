@@ -101,6 +101,36 @@ button.danger:hover:not(:disabled) {
   background: #dc2626;
 }
 
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+}
+
+button.ghost:hover:not(:disabled) {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mode-toggle button {
+  border-radius: 0;
+  border: none;
+  padding: 0.5rem 0.9rem;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -181,22 +211,36 @@ th {
 .badge.in-use { background: rgba(245, 158, 11, 0.15); color: var(--warn); }
 .badge.mine { background: rgba(34, 197, 94, 0.15); color: var(--success); }
 
-.toast {
+.toast-stack {
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.5rem;
+  max-width: 400px;
+  z-index: 20;
+}
+
+.toast {
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-left: 4px solid var(--accent);
   padding: 0.85rem 1.25rem;
   border-radius: 8px;
-  max-width: 400px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  z-index: 20;
+  cursor: pointer;
+  animation: slide-in 0.2s ease-out;
+}
+
+@keyframes slide-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .toast.success { border-left-color: var(--success); }
 .toast.error { border-left-color: var(--danger); }
+.toast.info { border-left-color: var(--accent); }
 
 .toast .toast-code {
   color: var(--text-dim);

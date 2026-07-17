@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { api } from '../api';
-import { ApiError, type Operator, type Vehicle } from '../types';
+import { useFleetState } from '../hooks/useFleetState';
+import { useToasts } from '../hooks/useToasts';
+import { ApiError, type SyncMode, type Vehicle, type VehicleChangedEvent } from '../types';
 import { CurrentVehiclePanel } from './CurrentVehiclePanel';
-import { Toast, type ToastState } from './Toast';
+import { Toasts } from './Toast';
 import { VehiclesTable } from './VehiclesTable';
 
 type Props = {
@@ -10,55 +12,60 @@ type Props = {
   onSwitchOperator: () => void;
 };
 
-const POLL_INTERVAL_MS = 5000;
+function statusText(v: Vehicle | null): string {
+  if (!v) return 'removed';
+  if (v.connectivityStatus === 'offline') return 'offline';
+  return v.assignedOperatorId ? 'assigned' : 'available';
+}
+
+function describeEvent(event: VehicleChangedEvent): string {
+  const name = event.vehicle?.name ?? event.vehicleId.slice(-4);
+  switch (event.kind) {
+    case 'created':
+      return `New vehicle: ${name}`;
+    case 'updated':
+      return `${name} · ${statusText(event.vehicle)}`;
+    case 'deleted':
+      return `Vehicle removed`;
+  }
+}
 
 export function Dashboard({ operatorId, onSwitchOperator }: Props) {
-  const [operator, setOperator] = useState<Operator | null>(null);
-  const [vehicles, setVehicles] = useState<Vehicle[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<SyncMode>('polling');
   const [busyVehicleId, setBusyVehicleId] = useState<string | null>(null);
   const [releasing, setReleasing] = useState(false);
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const { toasts, push, dismiss } = useToasts();
 
-  const refresh = useCallback(async () => {
-    try {
-      const [op, list] = await Promise.all([
-        api.getOperator(operatorId),
-        api.listVehicles(),
-      ]);
-      setOperator(op);
-      setVehicles(list);
-      setError(null);
-    } catch (e: unknown) {
-      setError(e instanceof ApiError ? e.message : 'Failed to load dashboard');
-    }
-  }, [operatorId]);
+  const handleEvent = useCallback(
+    (event: VehicleChangedEvent) => {
+      push({ kind: 'info', message: describeEvent(event) });
+    },
+    [push],
+  );
 
-  useEffect(() => {
-    refresh();
-    const interval = setInterval(refresh, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [refresh]);
+  const { vehicles, operator, error, refresh } = useFleetState(
+    operatorId,
+    mode,
+    handleEvent,
+  );
 
   const currentVehicle =
-    vehicles && operator?.currentVehicleId
-      ? (vehicles.find((v) => v.id === operator.currentVehicleId) ?? null)
-      : null;
+    vehicles?.find((v) => v.assignedOperatorId === operatorId) ?? null;
 
   const handleTakeover = async (vehicleId: string) => {
     setBusyVehicleId(vehicleId);
     try {
       const updated = await api.takeover(operatorId, vehicleId);
-      setToast({
+      push({
         kind: 'success',
         message: `You are now operating ${updated.name}.`,
       });
-      await refresh();
+      if (mode === 'polling') await refresh();
     } catch (e: unknown) {
       if (e instanceof ApiError) {
-        setToast({ kind: 'error', message: e.message, code: e.code });
+        push({ kind: 'error', message: e.message, code: e.code });
       } else {
-        setToast({ kind: 'error', message: 'Takeover failed.' });
+        push({ kind: 'error', message: 'Takeover failed.' });
       }
     } finally {
       setBusyVehicleId(null);
@@ -70,16 +77,13 @@ export function Dashboard({ operatorId, onSwitchOperator }: Props) {
     setReleasing(true);
     try {
       await api.release(operatorId, currentVehicle.id);
-      setToast({
-        kind: 'success',
-        message: `${currentVehicle.name} released.`,
-      });
-      await refresh();
+      push({ kind: 'success', message: `${currentVehicle.name} released.` });
+      if (mode === 'polling') await refresh();
     } catch (e: unknown) {
       if (e instanceof ApiError) {
-        setToast({ kind: 'error', message: e.message, code: e.code });
+        push({ kind: 'error', message: e.message, code: e.code });
       } else {
-        setToast({ kind: 'error', message: 'Release failed.' });
+        push({ kind: 'error', message: 'Release failed.' });
       }
     } finally {
       setReleasing(false);
@@ -97,7 +101,7 @@ export function Dashboard({ operatorId, onSwitchOperator }: Props) {
   if (!operator || !vehicles) {
     return (
       <div className="app">
-        <div className="state">Loading…</div>
+        <div className="state">Loading… ({mode})</div>
       </div>
     );
   }
@@ -111,7 +115,25 @@ export function Dashboard({ operatorId, onSwitchOperator }: Props) {
             You are <strong>{operator.name}</strong>
           </div>
         </div>
-        <button onClick={onSwitchOperator}>Switch operator</button>
+        <div className="header-actions">
+          <div className="mode-toggle" role="group" aria-label="Sync mode">
+            <button
+              className={mode === 'polling' ? 'primary' : 'ghost'}
+              onClick={() => setMode('polling')}
+            >
+              Polling
+            </button>
+            <button
+              className={mode === 'websocket' ? 'primary' : 'ghost'}
+              onClick={() => setMode('websocket')}
+            >
+              WebSocket
+            </button>
+          </div>
+          <button className="ghost" onClick={onSwitchOperator}>
+            Switch operator
+          </button>
+        </div>
       </div>
 
       <CurrentVehiclePanel
@@ -123,12 +145,12 @@ export function Dashboard({ operatorId, onSwitchOperator }: Props) {
       <VehiclesTable
         vehicles={vehicles}
         currentOperatorId={operatorId}
-        currentVehicleId={operator.currentVehicleId}
+        currentVehicleId={currentVehicle?.id ?? null}
         busyVehicleId={busyVehicleId}
         onTakeover={handleTakeover}
       />
 
-      <Toast toast={toast} onDismiss={() => setToast(null)} />
+      <Toasts toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 }

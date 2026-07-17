@@ -1,30 +1,25 @@
-import { useEffect } from 'react';
-
-export type ToastKind = 'success' | 'error' | 'info';
-
-export type ToastState = {
-  kind: ToastKind;
-  message: string;
-  code?: string;
-};
+import type { Toast } from '../hooks/useToasts';
 
 type Props = {
-  toast: ToastState | null;
-  onDismiss: () => void;
+  toasts: Toast[];
+  onDismiss: (id: number) => void;
 };
 
-export function Toast({ toast, onDismiss }: Props) {
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(onDismiss, 4000);
-    return () => clearTimeout(t);
-  }, [toast, onDismiss]);
-
-  if (!toast) return null;
+export function Toasts({ toasts, onDismiss }: Props) {
+  if (toasts.length === 0) return null;
   return (
-    <div className={`toast ${toast.kind}`}>
-      <div>{toast.message}</div>
-      {toast.code && <div className="toast-code">{toast.code}</div>}
+    <div className="toast-stack">
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className={`toast ${toast.kind}`}
+          onClick={() => onDismiss(toast.id)}
+          role="button"
+        >
+          <div>{toast.message}</div>
+          {toast.code && <div className="toast-code">{toast.code}</div>}
+        </div>
+      ))}
     </div>
   );
 }
