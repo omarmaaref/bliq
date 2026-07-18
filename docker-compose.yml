@@ -33,7 +33,7 @@ services:
       # the mongo container's own POV, not resolvable from sibling containers).
       MONGODB_URI: mongodb://mongodb:27017/bliq?directConnection=true
       PORT: 3000
-      NODE_ENV: production
+      NODE_ENV: development
     depends_on:
       mongodb:
         condition: service_healthy
@@ -55,6 +55,75 @@ services:
       - backend-2
     profiles: [cluster]
 
+  # --- monitoring stack (metrics + logs) ---
+  # Grafana on :3001. Only starts with the 'monitoring' profile:
+  #   docker compose --profile monitoring up -d --wait
+  # For scrape targets to exist, run alongside the 'cluster' profile:
+  #   docker compose --profile cluster --profile monitoring up -d --wait
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: bliq-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    profiles: [monitoring]
+
+  loki:
+    image: grafana/loki:3.3.0
+    container_name: bliq-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./monitoring/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    profiles: [monitoring]
+
+  promtail:
+    image: grafana/promtail:3.3.0
+    container_name: bliq-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    volumes:
+      - ./monitoring/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    depends_on:
+      - loki
+    profiles: [monitoring]
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: bliq-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+      - loki
+    profiles: [monitoring]
+
 volumes:
   mongodb_data:
   mongodb_config:
+  prometheus_data:
+  loki_data:
+  grafana_data:
