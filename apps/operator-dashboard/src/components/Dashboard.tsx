@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import { useFleetState } from '../hooks/useFleetState';
 import { useToasts } from '../hooks/useToasts';
-import { ApiError, type SyncMode, type Vehicle, type VehicleChangedEvent } from '../types';
+import {
+  ApiError,
+  type SyncMode,
+  type Vehicle,
+  type VehicleChangedEvent,
+} from '../types';
 import { CurrentVehiclePanel } from './CurrentVehiclePanel';
 import { Toasts } from './Toast';
 import { VehiclesTable } from './VehiclesTable';
@@ -36,7 +41,9 @@ export function Dashboard({ operatorId, onSwitchOperator }: Props) {
   const [mode, setMode] = useState<SyncMode>('websocket');
   const [busyVehicleId, setBusyVehicleId] = useState<string | null>(null);
   const [releasing, setReleasing] = useState(false);
-  const [operatorNames, setOperatorNames] = useState<Record<string, string>>({});
+  const [operatorNames, setOperatorNames] = useState<Record<string, string>>(
+    {},
+  );
   const [recentlyChangedIds, setRecentlyChangedIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -48,9 +55,7 @@ export function Dashboard({ operatorId, onSwitchOperator }: Props) {
     api
       .listOperators()
       .then((list) => {
-        setOperatorNames(
-          Object.fromEntries(list.map((o) => [o.id, o.name])),
-        );
+        setOperatorNames(Object.fromEntries(list.map((o) => [o.id, o.name])));
       })
       .catch(() => {
         // non-fatal: rows fall back to id suffix
@@ -105,7 +110,7 @@ export function Dashboard({ operatorId, onSwitchOperator }: Props) {
     [push],
   );
 
-  const { vehicles, operator, error, refresh } = useFleetState(
+  const { vehicles, operator, error, instanceId, refresh } = useFleetState(
     operatorId,
     mode,
     handleEvent,
@@ -176,6 +181,14 @@ export function Dashboard({ operatorId, onSwitchOperator }: Props) {
           <h1>Bliq Fleet Control</h1>
           <div className="who">
             You are <strong>{operator.name}</strong>
+            {instanceId && (
+              <>
+                {' · '}
+                <span title="Backend instance serving this WebSocket">
+                  backend <code>{instanceId}</code>
+                </span>
+              </>
+            )}
           </div>
         </div>
         <div className="header-actions">
