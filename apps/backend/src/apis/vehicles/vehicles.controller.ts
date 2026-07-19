@@ -21,6 +21,8 @@ import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { SetConnectivityDto } from './dto/set-connectivity.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import {
+  cannotDeleteAssignedVehicleExample,
+  cannotDeleteOnlineVehicleExample,
   cannotOfflineAssignedExample,
   vehicleAssignedExample,
   vehicleListExample,
@@ -36,8 +38,13 @@ export class VehiclesController {
   constructor(private readonly service: VehiclesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a vehicle (defaults to offline & unassigned).' })
-  @ApiOkResponse({ description: 'The created vehicle.', example: vehicleOfflineExample })
+  @ApiOperation({
+    summary: 'Create a vehicle (defaults to offline & unassigned).',
+  })
+  @ApiOkResponse({
+    description: 'The created vehicle.',
+    example: vehicleOfflineExample,
+  })
   create(@Body() dto: CreateVehicleDto): Promise<Vehicle> {
     return this.service.create(dto);
   }
@@ -61,7 +68,9 @@ export class VehiclesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Rename a vehicle.' })
   @ApiParam({ name: 'id', example: vehicleOnlineFreeExample.id })
-  @ApiOkResponse({ example: { ...vehicleOnlineFreeExample, name: 'Rover-01-renamed' } })
+  @ApiOkResponse({
+    example: { ...vehicleOnlineFreeExample, name: 'Rover-01-renamed' },
+  })
   @ApiNotFoundResponse({ example: vehicleNotFoundExample })
   update(
     @Param('id') id: string,
@@ -72,9 +81,26 @@ export class VehiclesController {
 
   @Delete(':id')
   @HttpCode(204)
-  @ApiOperation({ summary: 'Delete a vehicle. No effect on operators.' })
+  @ApiOperation({
+    summary: 'Delete a vehicle.',
+    description:
+      'Rejected while the vehicle is online or assigned — take it offline and release it first.',
+  })
   @ApiParam({ name: 'id', example: vehicleOnlineFreeExample.id })
   @ApiNotFoundResponse({ example: vehicleNotFoundExample })
+  @ApiConflictResponse({
+    description: 'Vehicle is online or still assigned.',
+    examples: {
+      online: {
+        summary: 'Vehicle is online',
+        value: cannotDeleteOnlineVehicleExample,
+      },
+      assigned: {
+        summary: 'Vehicle is assigned',
+        value: cannotDeleteAssignedVehicleExample,
+      },
+    },
+  })
   async remove(@Param('id') id: string): Promise<void> {
     await this.service.delete(id);
   }

@@ -6,6 +6,10 @@ import {
 } from '@nestjs/common';
 import { Vehicle } from '../../domain/vehicles/vehicle.entity';
 import {
+  VehicleOnlineError,
+  VehicleStillAssignedError,
+} from '../../domain/vehicles/vehicle.errors';
+import {
   NewVehicle,
   UpdateVehicle,
   VehicleRepository,
@@ -40,8 +44,14 @@ export class VehiclesService {
   }
 
   async delete(id: string): Promise<void> {
-    const existed = await this.repo.delete(id);
-    if (!existed) throw new NotFoundException(`Vehicle ${id} not found`);
+    const vehicle = await this.repo.findById(id);
+    if (!vehicle) throw new NotFoundException(`Vehicle ${id} not found`);
+
+    if (vehicle.assignedOperatorId !== null)
+      throw new VehicleStillAssignedError();
+    if (vehicle.connectivityStatus === 'online') throw new VehicleOnlineError();
+
+    await this.repo.delete(id);
   }
 
   async setConnectivityStatus(

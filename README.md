@@ -449,7 +449,7 @@ Full Swagger UI at [`/docs`](http://localhost:3000/docs) in dev.
 | POST   | `/vehicles`                       | `{ name }`               | `Vehicle` |
 | GET    | `/vehicles/:id`                   | —                        | `Vehicle` |
 | PATCH  | `/vehicles/:id`                   | `{ name? }`              | `Vehicle` |
-| DELETE | `/vehicles/:id`                   | —                        | `204` |
+| DELETE | `/vehicles/:id`                   | —                        | `204` (rejected with `409` if online or assigned) |
 | PATCH  | `/vehicles/:id/connectivity`      | `{ status: 'online' \| 'offline' }` | `Vehicle` |
 
 ### Operators (read-only, seeded on boot)
@@ -559,6 +559,31 @@ Controllers, DTOs, and CRUD are not directly unit-tested. They would either
 repeat framework behaviour (class-validator, Nest routing) or verify an obvious
 delegation. Coverage-driven testing is deliberately avoided; the test surface
 is chosen by where real risk lives.
+
+### Known limitation — concurrency tests are sequential, not truly concurrent
+
+The two "race" tests use `Promise.allSettled([callA, callB])` in a single
+Node.js process. Because Node.js is single-threaded and both calls `await`
+inside a Mongoose session, the event loop runs them sequentially: the first
+transaction completes and commits before the second one begins its read. The
+second call therefore sees already-committed state and fails the in-memory
+domain-rule check — no MongoDB write-conflict is triggered.
+
+This still catches regression errors, but it does not exercise the actual
+concurrency path where two transactions read the same unassigned vehicle
+simultaneously, both pass the in-memory check, and then one is rejected at
+commit time by MongoDB's write-conflict detection.
+
+To test that path properly you would need either:
+- Two separate processes (or workers) racing against the same replica set.
+- An injected delay between the in-memory check and the write, with a
+  competing transaction committed in that window.
+
+The behaviour under a true write conflict is described in
+[Concurrency & consistency](#concurrency--consistency): `session.withTransaction`
+auto-retries on `TransientTransactionError`, the retry reads the now-committed
+state, the rule check fails, and a typed `DomainError` is returned — but this
+path is exercised only in production load, not in the current test suite.
 
 ---
 

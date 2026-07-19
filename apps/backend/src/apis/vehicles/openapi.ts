@@ -48,3 +48,16 @@ export const cannotOfflineAssignedExample = {
   error: 'CANNOT_OFFLINE_ASSIGNED_VEHICLE',
   message: 'release the vehicle first',
 };
+
+export const cannotDeleteOnlineVehicleExample = {
+  statusCode: 409,
+  error: 'VEHICLE_ONLINE',
+  message: 'Vehicle must be taken offline before it can be deleted.',
+};
+
+export const cannotDeleteAssignedVehicleExample = {
+  statusCode: 409,
+  error: 'VEHICLE_STILL_ASSIGNED',
+  message:
+    'Vehicle is currently assigned to an operator; release it before deleting.',
+};
