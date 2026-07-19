@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Scrape both backend replicas. If only one is up (e.g. dev without the
+  # cluster profile), the other simply reports as "down" — Prometheus keeps
+  # trying without failing the whole scrape.
+  - job_name: bliq-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - backend-1:3000
+          - backend-2:3000
+        labels:
+          service: bliq-backend
+
+  # Prometheus scraping itself — free health signal.
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

@@ -7,6 +7,7 @@ import {
   type SyncMode,
   type Vehicle,
   type VehicleChangedEvent,
+  type VehiclesSnapshot,
 } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
@@ -16,6 +17,8 @@ export type FleetState = {
   vehicles: Vehicle[] | null;
   operator: Operator | null;
   error: string | null;
+  /** Id of the backend instance the WS is currently connected to (null in polling mode). */
+  instanceId: string | null;
   refresh: () => Promise<void>;
 };
 
@@ -28,6 +31,7 @@ export function useFleetState(
   const [vehicles, setVehicles] = useState<Vehicle[] | null>(null);
   const [operator, setOperator] = useState<Operator | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [instanceId, setInstanceId] = useState<string | null>(null);
   const onEventRef = useRef(onVehicleEvent);
   onEventRef.current = onVehicleEvent;
   const onFallbackRef = useRef(onWebSocketFallback);
@@ -47,9 +51,10 @@ export function useFleetState(
     }
   }, [operatorId]);
 
-  // Polling mode: periodic HTTP refresh.
+  // Polling mode: periodic HTTP refresh. No known backend instance.
   useEffect(() => {
     if (mode !== 'polling') return;
+    setInstanceId(null);
     refresh();
     const interval = window.setInterval(refresh, POLL_INTERVAL_MS);
     return () => window.clearInterval(interval);
@@ -69,7 +74,9 @@ export function useFleetState(
       })
       .catch((e: unknown) => {
         if (!cancelled) {
-          setError(e instanceof ApiError ? e.message : 'Failed to load operator');
+          setError(
+            e instanceof ApiError ? e.message : 'Failed to load operator',
+          );
         }
       });
 
@@ -89,8 +96,9 @@ export function useFleetState(
       onFallbackRef.current?.(reason);
     };
 
-    socket.on('vehicles.snapshot', (snapshot: Vehicle[]) => {
-      setVehicles(snapshot);
+    socket.on('vehicles.snapshot', (snapshot: VehiclesSnapshot) => {
+      setVehicles(snapshot.vehicles);
+      setInstanceId(snapshot.instanceId);
       setError(null);
     });
 
@@ -120,8 +128,9 @@ export function useFleetState(
     return () => {
       cancelled = true;
       socket.disconnect();
+      setInstanceId(null);
     };
   }, [mode, operatorId]);
 
-  return { vehicles, operator, error, refresh };
+  return { vehicles, operator, error, instanceId, refresh };
 }
