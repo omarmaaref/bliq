@@ -25,6 +25,13 @@ export type VehicleChangedEvent = {
   vehicle: Vehicle | null;
 };
 
+/** Payload of the `vehicles.snapshot` event sent on WebSocket connect. */
+export type VehiclesSnapshot = {
+  vehicles: Vehicle[];
+  /** Backend instance the client is currently connected to. */
+  instanceId: string;
+};
+
 export type SyncMode = 'polling' | 'websocket';
 
 export class ApiError extends Error {
