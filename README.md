@@ -38,13 +38,18 @@ same time.
 **Prerequisites: [Docker](https://docs.docker.com/get-started/get-docker/) with Compose v2 and [Node 22](https://nodejs.org/).**
 
 ```bash
+# Once, on a fresh clone:
+npm run full:install
+
+# Every time you want to work:
 npm run full:dev
 ```
 
-That's it. The command:
+`full:install` installs the frontend dependencies (the backend runs in Docker — no local install needed).
 
-1. Installs frontend dependencies (`npm install` for each Vite app).
-2. Builds the backend Docker image and starts the full stack:
+`full:dev` starts the whole stack:
+
+1. Builds the backend Docker image and starts the full stack:
    - 2 NestJS replicas behind **Nginx** on `http://localhost:8090`
    - **MongoDB** replica set (required for multi-document transactions)
    - **Prometheus** · **Loki** · **Promtail** · **Grafana** observability stack

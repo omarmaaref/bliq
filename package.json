@@ -9,8 +9,8 @@
     "dev": "npm run docker:up && concurrently -k -n backend,operator,admin -c blue,magenta,cyan \"npm run backend:dev\" \"npm run operator:dev\" \"npm run admin:dev\"",
     "docker:up": "docker compose up -d --wait",
     "docker:down": "docker compose down",
-
-    "full:dev": "npm --prefix apps/operator-dashboard install && npm --prefix apps/admin-dashboard install && npm run full:up && concurrently -k -n operator,admin -c magenta,cyan \"npm run operator:dev:full\" \"npm run admin:dev:full\"",
+    "full:install": "npm --prefix apps/operator-dashboard install && npm --prefix apps/admin-dashboard install",
+    "full:dev": "npm run full:up && concurrently -k -n operator,admin -c magenta,cyan \"npm run operator:dev:full\" \"npm run admin:dev:full\"",
     "full:up": "docker compose --profile cluster --profile monitoring up -d --wait --build",
     "full:down": "docker compose --profile cluster --profile monitoring down",
     "full:logs": "docker compose --profile cluster logs -f nginx backend-1 backend-2",
