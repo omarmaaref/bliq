@@ -22,7 +22,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiError(
       body.message ?? `Request failed with status ${res.status}`,
-      body.code ?? 'UNKNOWN_ERROR',
+      body.error ?? 'UNKNOWN_ERROR',
       res.status,
     );
   }

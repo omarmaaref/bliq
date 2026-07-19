@@ -13,7 +13,7 @@ export type Operator = {
 
 export type ApiErrorBody = {
   statusCode: number;
-  code: string;
+  error: string;
   message: string;
 };
 
