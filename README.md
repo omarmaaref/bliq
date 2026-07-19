@@ -35,39 +35,32 @@ same time.
 
 ## Quick start
 
-Prerequisites: **Node 22**, **Docker** with Compose v2 (for MongoDB).
+**Prerequisites: [Docker](https://docs.docker.com/get-started/get-docker/) with Compose v2 and [Node 22](https://nodejs.org/).**
 
 ```bash
-# Once, on a fresh clone:
-npm run install:all
-
-# Every time you want to work:
-npm run dev
+npm run full:dev
 ```
 
-`npm run dev` starts the whole stack in one shot:
+That's it. The command:
 
-1. `docker compose up -d --wait` boots MongoDB as a single-node replica set
-   and blocks until the healthcheck reports healthy (transactions require a
-   replica set — the compose healthcheck also runs `rs.initiate()` on first
-   start, so no manual step is needed).
-2. `concurrently` launches three dev servers side by side:
-   - **backend** on `http://localhost:3000`
-   - **operator dashboard** on `http://localhost:5173`
-   - **admin dashboard** on `http://localhost:5174`
+1. Installs frontend dependencies (`npm install` for each Vite app).
+2. Builds the backend Docker image and starts the full stack:
+   - 2 NestJS replicas behind **Nginx** on `http://localhost:8090`
+   - **MongoDB** replica set (required for multi-document transactions)
+   - **Prometheus** · **Loki** · **Promtail** · **Grafana** observability stack
+3. Launches both frontends as Vite dev servers pointed at the Nginx backend.
 
-Ctrl+C stops all three. Mongo keeps running — use `npm run docker:down` to
-shut it down, or `npm run docker:reset` to wipe the volume and restart fresh
-(re-seeds operators on the next boot).
+Once everything is up:
 
-Once running:
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Operator dashboard** | http://localhost:5173 | For remote operators. Select your operator identity, browse the live vehicle list, take over an available vehicle, and release it when done. Updates arrive in real time via WebSocket (falls back to polling if the socket drops). |
+| **Admin dashboard** | http://localhost:5174 | For fleet administrators. Add new vehicles, toggle any vehicle between online and offline, and delete vehicles that are no longer in service. |
+| **Grafana** | http://localhost:3001 | Observability UI — HTTP latency histograms, request rates, and container logs. Login: `admin` / `admin`. |
+| **Prometheus** | http://localhost:9090 | Raw metrics scrape endpoint and query UI. |
+| **Backend API** | http://localhost:8090 | REST + WebSocket, load-balanced across 2 replicas by Nginx. Swagger docs at [/docs](http://localhost:8090/docs). |
 
-- Open the **operator dashboard** at `:5173`, pick a seeded operator, and use
-  the fleet. It defaults to WebSocket mode with a live event log.
-- Open the **admin dashboard** at `:5174` to add vehicles and toggle their
-  connectivity.
-- Open the **Swagger UI** at `:3000/docs` for the full API reference with
-  live examples (dev-only — disabled when `NODE_ENV=production`).
+**To stop:** `Ctrl+C` kills the frontends; then `npm run full:down` tears down the Docker stack.
 
 ---
 
