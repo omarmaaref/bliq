@@ -478,20 +478,46 @@ build would involve:
 
 ## Contribution workflow
 
-The repo is set up as if a small team is collaborating on it.
+### Pull request policy
 
-- Feature branches, PR-only merges. `main` is protected; CI must be green
-  and a Code Owner must approve before merging.
-- Commit messages follow **Conventional Commits** with a repo-specific scope
-  allowlist (`backend | operator-dashboard | admin-dashboard | repo | ci | docs`),
-  enforced locally by a husky `commit-msg` hook and in CI on every PR.
-- Local `pre-commit` hook runs Prettier on staged files via `lint-staged`.
-- CI runs on every PR only (not on push to `main`): backend typecheck +
-  lint + tests, frontend typecheck + build, commit range linting.
-- Type safety is enforced at both compile time (TypeScript strict mode) and
-  CI; the pipeline fails if `tsc --noEmit` reports errors.
-- See [`.github/BRANCH_PROTECTION.md`](.github/BRANCH_PROTECTION.md) for the
-  one-time GitHub UI settings that turn the ruleset above into hard gates.
+Nothing lands on `main` except through a pull request. The branch is
+protected: direct pushes are rejected at the GitHub side regardless of
+local hook bypasses.
+
+**Branch naming** follows the Conventional Commits scope:
+`feat/`, `fix/`, `chore/`, `docs/`, `ci/` + a short slug (e.g. `feat/operator-auth`).
+
+**Opening a PR** pre-fills [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md):
+summary, notable diffs per layer (backend / frontend / infra / docs), local
+testing checklist, and notes for reviewers.
+
+**Review**: [`.github/CODEOWNERS`](.github/CODEOWNERS) auto-requests a review
+from the repo owner on every PR. At least one approval is required; stale
+approvals are dismissed when new commits are pushed.
+
+**Merge strategy**: squash or rebase only — no merge commits. Linear history
+is enforced, and the head branch is deleted automatically after merge.
+
+See [`.github/BRANCH_PROTECTION.md`](.github/BRANCH_PROTECTION.md) for the
+one-time GitHub UI steps that turn these rules into hard gates.
+
+### CI pipeline
+
+CI runs on every pull request (not on push to `main`). In-flight runs for the
+same PR are cancelled when new commits are pushed so only the latest commit
+needs to prove itself green.
+
+Three parallel jobs must all pass before merge is allowed:
+
+| Job | Steps |
+|-----|-------|
+| **Backend** | `npm ci` → `tsc --noEmit` → `eslint` → `jest` (against `mongodb-memory-server`) |
+| **Frontend** | `npm ci` → `tsc --noEmit` → `vite build` |
+| **Commit messages** | `commitlint` against the full PR commit range |
+
+Two local Husky hooks give developers early feedback before they push:
+- `pre-commit`: Prettier via `lint-staged` on staged files.
+- `commit-msg`: commitlint immediately after each commit.
 
 ---
 
@@ -533,6 +559,7 @@ A few things were left open by the spec, here's what I went with:
 - **Audit log**: an append-only `assignments` collection for every takeover, release, and connectivity change.
 - **Playwright E2E tests** through the full stack, proving domain error codes surface correctly in the UI.
 - **`eslint-plugin-boundaries`** to enforce the layer rules structurally rather than by convention.
+- **CD pipeline**: on merge to `main`, build and push the backend Docker image to a registry (Docker Hub / ECR / GCR), then trigger a rolling deploy to a staging environment. A separate release workflow deploys to production on a tagged commit, with a manual approval gate between staging and prod.
 
 ---
 
