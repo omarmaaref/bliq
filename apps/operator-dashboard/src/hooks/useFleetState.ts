@@ -83,6 +83,7 @@ export function useFleetState(
     const socket: Socket = io(`${API_URL}/realtime`, {
       transports: ['websocket'],
       withCredentials: true,
+      auth: { operatorId },
       // Fail fast: two attempts, then trigger fallback.
       reconnectionAttempts: 2,
       timeout: 3000,
